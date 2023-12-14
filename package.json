@@ -18,8 +18,8 @@
     "firebase": "^10.7.1",
     "react": "18.2.0",
     "react-native": "0.72.6",
-    "react-native-gesture-handler": "^2.14.0",
-    "react-native-screens": "^3.29.0",
+    "react-native-gesture-handler": "~2.12.0",
+    "react-native-screens": "~3.22.0",
     "react-native-web": "^0.19.9"
   },
   "devDependencies": {
