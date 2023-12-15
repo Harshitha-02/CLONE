@@ -14,7 +14,9 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import LandingScreen from './components/auth/Landing';
 import RegisterScreen from './components/auth/Register';
+import LoginScreen from './components/auth/Login'
 import MainScreen from './components/Main';
+import AddScreen from './components/main/Add'
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -87,6 +89,7 @@ class App extends Component {
           <Stack.Navigator initialRouteName="Landing">
             <Stack.Screen name="Landing" component={LandingScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       );
@@ -95,7 +98,10 @@ class App extends Component {
     return (
       <Provider store={store}>
         <NavigationContainer>
-          <Stack.Screen name="Main" component={MainScreen} option={{headerShown:false}} />
+          <Stack.Navigator initialRouteName="Main">
+            <Stack.Screen name="Main" component={MainScreen} option={{headerShown:false}} />
+            <Stack.Screen name="Add" component={AddScreen}  />
+          </Stack.Navigator>
         </NavigationContainer>
       </Provider>
     );
