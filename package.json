@@ -11,8 +11,10 @@
   "dependencies": {
     "@expo/webpack-config": "^19.0.0",
     "@react-native-community/masked-view": "^0.1.11",
+    "@react-navigation/bottom-tabs": "^6.5.11",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/stack": "^6.3.20",
+    "@reduxjs/toolkit": "^2.0.1",
     "expo": "~49.0.15",
     "expo-status-bar": "~1.6.0",
     "firebase": "^10.7.1",
@@ -20,7 +22,11 @@
     "react-native": "0.72.6",
     "react-native-gesture-handler": "~2.12.0",
     "react-native-screens": "~3.22.0",
-    "react-native-web": "^0.19.9"
+    "react-native-vector-icons": "^10.0.3",
+    "react-native-web": "~0.19.6",
+    "react-redux": "^9.0.4",
+    "redux": "^5.0.0",
+    "redux-thunk": "^3.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
