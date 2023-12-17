@@ -5,19 +5,35 @@ import{ connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import { fetchUser, fetchUserPosts } from '../redux/actions/index'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 import FeedScreen from './main/Feed'
+import SearchScreen from './main/Search'
 import ProfileScreen from './main/Profile'
 
 const Tab = createMaterialBottomTabNavigator();
+
 const EmptyScreen = () => {
   return (null)
 }
 
-export class Main extends Component {
+class Main extends Component {
     componentDidMount(){
-      this.props.fetchUser();
-      this.props.fetchUserPosts();
+      // this.props.fetchUser();
+      // this.props.fetchUserPosts();
+      const { fetchUser, fetchUserPosts } = this.props;
+      const auth = getAuth();
+
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          fetchUser();
+          fetchUserPosts();
+        } else {
+          // Handle the case when the user is not signed in
+        }
+      });
+
+      return () => unsubscribe();
     }
   render() {
     // const { currentUser } = this.props;
@@ -27,6 +43,7 @@ export class Main extends Component {
     //             <View></View>
     //         )
     //     }
+    const { navigation, currentUser } = this.props;
     return (
       // <View style={{ flex:1, justifyContent:'center'}}>
       //   <Text>{currentUser.name} is logged in</Text>
@@ -36,6 +53,12 @@ export class Main extends Component {
           options = {{
             tabBarIcon: ({color, size }) => (
               <MaterialCommunityIcons name="home" color={color} size={26} />
+            )
+          }} />
+        <Tab.Screen name="Search" component={SearchScreen} navigation={this.props.navigation}
+          options = {{
+            tabBarIcon: ({color, size }) => (
+              <MaterialCommunityIcons name="magnify" color={color} size={26} />
             )
           }} />
         <Tab.Screen name="AddContainer" component={EmptyScreen}
@@ -63,7 +86,9 @@ export class Main extends Component {
 
 const mapStateToProps = (store) => ({
   currentUser: store.userState.currentUser
-})
-const mapDispatchProps = (dispatch) => bindActionCreators({fetchUser, fetchUserPosts }, dispatch);
+});
+
+const mapDispatchProps = (dispatch) => 
+  bindActionCreators({fetchUser, fetchUserPosts }, dispatch);
 
 export default connect(mapStateToProps, mapDispatchProps)(Main);
