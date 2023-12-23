@@ -3,7 +3,7 @@ import { View, Text } from 'react-native'
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
 import{ connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import { fetchUser, fetchUserPosts } from '../redux/actions/index'
+import { fetchUser, fetchUserPosts, fetchUserFollowing } from '../redux/actions/index'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
@@ -28,6 +28,7 @@ class Main extends Component {
         if (user) {
           fetchUser();
           fetchUserPosts();
+          fetchUserFollowing();
         } else {
           // Handle the case when the user is not signed in
         }
@@ -89,6 +90,6 @@ const mapStateToProps = (store) => ({
 });
 
 const mapDispatchProps = (dispatch) => 
-  bindActionCreators({fetchUser, fetchUserPosts }, dispatch);
+  bindActionCreators({fetchUser, fetchUserPosts, fetchUserFollowing }, dispatch);
 
 export default connect(mapStateToProps, mapDispatchProps)(Main);

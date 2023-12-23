@@ -1,25 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Image, FlatList } from 'react-native';
-
-import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { StyleSheet, View, Text, Image, FlatList, Button,TouchableOpacity } from 'react-native';
+import { getFirestore, doc, getDoc, collection, query, orderBy, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import { connect } from 'react-redux';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-function Profile(props) {
+const Profile = (props) => {
   const [userPosts, setUserPosts] = useState([]);
   const [user, setUser] = useState(null);
+  const [following, setFollowing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       const { currentUser } = props;
       const db = getFirestore();
-      const userRef = doc(db, 'users', props.route.params.uid);
+      const auth = getAuth();
 
       try {
-        if (props.route.params.uid === currentUser.uid) {
+        const userId = props.route?.params?.uid;
+
+        if (!userId) {
+          console.error('User ID is not defined');
+          return;
+        }
+
+        if (userId === currentUser?.uid) {
           setUser(currentUser);
           setUserPosts(props.posts);
         } else {
-          const userSnapshot = await getDoc(userRef);
+          const userDocRef = doc(db, 'users', userId);
+          const userSnapshot = await getDoc(userDocRef);
 
           if (userSnapshot.exists()) {
             setUser(userSnapshot.data());
@@ -30,7 +39,7 @@ function Profile(props) {
           const userPostsCollection = collection(
             db,
             'posts',
-            props.route.params.uid,
+            userId,
             'userPosts'
           );
 
@@ -51,7 +60,49 @@ function Profile(props) {
     };
 
     fetchData();
-  }, [props.route.params.uid, props.currentUser, props.posts]);
+  }, [props.route?.params?.uid, props.currentUser, props.posts]);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const followingRef = doc(getFirestore(), 'following', auth.currentUser.uid, 'userFollowing', props.route?.params?.uid);
+        const unsubscribeFollowing = onSnapshot(followingRef, (doc) => {
+          setFollowing(doc.exists());
+        });
+
+        return () => unsubscribeFollowing();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [props.route?.params?.uid, props.following]);
+
+  const onFollow = async () => {
+    const db = getFirestore();
+    const auth = getAuth();
+
+    try {
+      const followingRef = doc(db, 'following', auth.currentUser.uid, 'userFollowing', props.route.params.uid);
+      await setDoc(followingRef, {});
+      setFollowing(true);
+    } catch (error) {
+      console.error('Error following user:', error);
+    }
+  };
+
+  const onUnfollow = async () => {
+    const db = getFirestore();
+    const auth = getAuth();
+
+    try {
+      const followingRef = doc(db, 'following', auth.currentUser.uid, 'userFollowing', props.route.params.uid);
+      await deleteDoc(followingRef);
+      setFollowing(false);
+    } catch (error) {
+      console.error('Error unfollowing user:', error);
+    }
+  };
 
   if (user === null) {
     return <View />;
@@ -62,8 +113,20 @@ function Profile(props) {
       <View style={styles.containerInfo}>
         <Text>{user.name}</Text>
         <Text>{user.email}</Text>
+        {props.route.params.uid !== props.currentUser.uid ? (
+          <View>
+            {following ? (
+              <TouchableOpacity style={styles.button} onPress={() => onUnfollow()} >
+                <Text style={styles.buttonText}>Following</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.button} onPress={() => onFollow()} >
+                <Text style={styles.buttonText}>Follow</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : null}
       </View>
-
       <View style={styles.containerGallery}>
         <FlatList
           numColumns={3}
@@ -78,7 +141,7 @@ function Profile(props) {
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -97,11 +160,25 @@ const styles = StyleSheet.create({
     flex: 1,
     aspectRatio: 1 / 1,
   },
+  button: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: 'black',
+  },
+
+  buttonText: {
+    fontSize: 16,
+  },
 });
 
 const mapStateToProps = (store) => ({
   currentUser: store.userState.currentUser,
   posts: store.userState.posts,
+  following: store.userState.following,
 });
 
 export default connect(mapStateToProps, null)(Profile);
