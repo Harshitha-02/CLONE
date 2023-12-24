@@ -10,73 +10,59 @@ const Profile = (props) => {
   const [following, setFollowing] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { currentUser } = props;
-      const db = getFirestore();
-      const auth = getAuth();
+    const { currentUser, posts, route } = props;
+    const { uid } = route.params || {};
 
-      try {
-        const userId = props.route?.params?.uid;
+    if (uid && uid === currentUser.uid) {
+      setUser(currentUser);
+      setUserPosts(posts);
+      setCurrentUid(currentUser ? currentUser.uid : null);
+      if (props.following.indexOf(props.route.params.uid) > -1) {
+        setFollowing(true);
+      } else {
+        setFollowing(false);
+      }
+    } else {
+      const firestore = getFirestore();
 
-        if (!userId) {
-          console.error('User ID is not defined');
-          return;
-        }
+      const fetchUserData = async () => {
+        try {
+          const userDocRef = doc(firestore, 'users', props.route.params.uid);
+          const snapshot = await getDoc(userDocRef);
 
-        if (userId === currentUser?.uid) {
-          setUser(currentUser);
-          setUserPosts(props.posts);
-        } else {
-          const userDocRef = doc(db, 'users', userId);
-          const userSnapshot = await getDoc(userDocRef);
-
-          if (userSnapshot.exists()) {
-            setUser(userSnapshot.data());
+          if (snapshot.exists()) {
+            setUser(snapshot.data());
           } else {
             console.log('User does not exist');
           }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      };
 
-          const userPostsCollection = collection(
-            db,
-            'posts',
-            userId,
-            'userPosts'
-          );
-
+      const fetchUserPostsData = async () => {
+        try {
+          const userPostsCollection = collection(firestore, 'posts', props.route.params.uid, 'userPosts');
           const q = query(userPostsCollection, orderBy('creation', 'asc'));
           const postsSnapshot = await getDocs(q);
 
-          let posts = postsSnapshot.docs.map((doc) => {
+          let posts = postsSnapshot.docs.map(doc => {
             const data = doc.data();
             const id = doc.id;
             return { id, ...data };
           });
 
           setUserPosts(posts);
+        } catch (error) {
+          console.error('Error fetching user posts:', error);
         }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
+      };
 
-    fetchData();
-  }, [props.route?.params?.uid, props.currentUser, props.posts]);
+      fetchUserData();
+      fetchUserPostsData();
+    }
 
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const followingRef = doc(getFirestore(), 'following', auth.currentUser.uid, 'userFollowing', props.route?.params?.uid);
-        const unsubscribeFollowing = onSnapshot(followingRef, (doc) => {
-          setFollowing(doc.exists());
-        });
-
-        return () => unsubscribeFollowing();
-      }
-    });
-
-    return () => unsubscribe();
-  }, [props.route?.params?.uid, props.following]);
+  }, [props.route.params.uid, props.following, props.currentUser ]);
 
   const onFollow = async () => {
     const db = getFirestore();

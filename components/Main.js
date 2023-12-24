@@ -18,37 +18,14 @@ const EmptyScreen = () => {
 }
 
 class Main extends Component {
-    componentDidMount(){
-      // this.props.fetchUser();
-      // this.props.fetchUserPosts();
-      const { fetchUser, fetchUserPosts } = this.props;
-      const auth = getAuth();
-
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          fetchUser();
-          fetchUserPosts();
-          fetchUserFollowing();
-        } else {
-          // Handle the case when the user is not signed in
-        }
-      });
-
-      return () => unsubscribe();
-    }
+  componentDidMount() {
+    this.props.fetchUser();
+    this.props.fetchUserPosts();
+    this.props.fetchUserFollowing();
+  }
   render() {
-    // const { currentUser } = this.props;
-    // console.log()
-    //     if(currentUser==undefined){
-    //         return(
-    //             <View></View>
-    //         )
-    //     }
-    const { navigation, currentUser } = this.props;
     return (
-      // <View style={{ flex:1, justifyContent:'center'}}>
-      //   <Text>{currentUser.name} is logged in</Text>
-      // </View>
+      
       <Tab.Navigator initialRouteName='Feed' labeled={false}>
         <Tab.Screen name="Feed" component={FeedScreen}
           options = {{
