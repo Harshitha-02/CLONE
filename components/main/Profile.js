@@ -1,118 +1,88 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Image, FlatList, Button,TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, Image, FlatList, Button } from 'react-native';
+
+import { getAuth, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDoc, collection, query, orderBy, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import { connect } from 'react-redux';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-const Profile = (props) => {
+function Profile(props) {
   const [userPosts, setUserPosts] = useState([]);
   const [user, setUser] = useState(null);
   const [following, setFollowing] = useState(false);
 
   useEffect(() => {
-    const { currentUser, posts, route } = props;
-    const { uid } = route.params || {};
+    const { currentUser, posts } = props;
 
-    if (uid && uid === currentUser.uid) {
-      setUser(currentUser);
-      setUserPosts(posts);
-      setCurrentUid(currentUser ? currentUser.uid : null);
+    const fetchData = async () => {
+      if (props.route.params.uid === getAuth().currentUser.uid) {
+        setUser(currentUser);
+        setUserPosts(posts);
+      } else {
+        const userDoc = await getDoc(doc(getFirestore(), 'users', props.route.params.uid));
+        const postsQuery = query(
+          collection(getFirestore(), 'posts', props.route.params.uid, 'userPosts'),
+          orderBy('creation', 'asc')
+        );
+
+        const postsSnapshot = await getDocs(postsQuery);
+
+        setUser(userDoc.data());
+
+        const posts = postsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          const id = doc.id;
+          return { id, ...data };
+        });
+
+        setUserPosts(posts);
+      }
+
       if (props.following.indexOf(props.route.params.uid) > -1) {
         setFollowing(true);
       } else {
         setFollowing(false);
       }
-    } else {
-      const firestore = getFirestore();
+    };
 
-      const fetchUserData = async () => {
-        try {
-          const userDocRef = doc(firestore, 'users', props.route.params.uid);
-          const snapshot = await getDoc(userDocRef);
-
-          if (snapshot.exists()) {
-            setUser(snapshot.data());
-          } else {
-            console.log('User does not exist');
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      };
-
-      const fetchUserPostsData = async () => {
-        try {
-          const userPostsCollection = collection(firestore, 'posts', props.route.params.uid, 'userPosts');
-          const q = query(userPostsCollection, orderBy('creation', 'asc'));
-          const postsSnapshot = await getDocs(q);
-
-          let posts = postsSnapshot.docs.map(doc => {
-            const data = doc.data();
-            const id = doc.id;
-            return { id, ...data };
-          });
-
-          setUserPosts(posts);
-        } catch (error) {
-          console.error('Error fetching user posts:', error);
-        }
-      };
-
-      fetchUserData();
-      fetchUserPostsData();
-    }
-
-  }, [props.route.params.uid, props.following, props.currentUser ]);
+    fetchData();
+  }, [props.route.params.uid, props.following]);
 
   const onFollow = async () => {
-    const db = getFirestore();
-    const auth = getAuth();
-
-    try {
-      const followingRef = doc(db, 'following', auth.currentUser.uid, 'userFollowing', props.route.params.uid);
-      await setDoc(followingRef, {});
-      setFollowing(true);
-    } catch (error) {
-      console.error('Error following user:', error);
-    }
+    const followingDocRef = doc(getFirestore(), 'following', getAuth().currentUser.uid, 'userFollowing', props.route.params.uid);
+    await setDoc(followingDocRef, {});
   };
 
   const onUnfollow = async () => {
-    const db = getFirestore();
-    const auth = getAuth();
+    const followingDocRef = doc(getFirestore(), 'following', getAuth().currentUser.uid, 'userFollowing', props.route.params.uid);
+    await deleteDoc(followingDocRef);
+  };
 
-    try {
-      const followingRef = doc(db, 'following', auth.currentUser.uid, 'userFollowing', props.route.params.uid);
-      await deleteDoc(followingRef);
-      setFollowing(false);
-    } catch (error) {
-      console.error('Error unfollowing user:', error);
-    }
+  const onLogout = () => {
+    signOut(getAuth());
   };
 
   if (user === null) {
     return <View />;
   }
-
   return (
     <View style={styles.container}>
       <View style={styles.containerInfo}>
         <Text>{user.name}</Text>
         <Text>{user.email}</Text>
-        {props.route.params.uid !== props.currentUser.uid ? (
+
+        {props.route.params.uid !== getAuth().currentUser.uid ? (
           <View>
             {following ? (
-              <TouchableOpacity style={styles.button} onPress={() => onUnfollow()} >
-                <Text style={styles.buttonText}>Following</Text>
-              </TouchableOpacity>
+              <Button title="Following" onPress={() => onUnfollow()} />
             ) : (
-              <TouchableOpacity style={styles.button} onPress={() => onFollow()} >
-                <Text style={styles.buttonText}>Follow</Text>
-              </TouchableOpacity>
+              <Button title="Follow" onPress={() => onFollow()} />
             )}
           </View>
-        ) : null}
+        ) : (
+          <Button title="Logout" onPress={() => onLogout()} />
+        )}
       </View>
+
       <View style={styles.containerGallery}>
         <FlatList
           numColumns={3}
@@ -127,7 +97,7 @@ const Profile = (props) => {
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -145,19 +115,6 @@ const styles = StyleSheet.create({
   image: {
     flex: 1,
     aspectRatio: 1 / 1,
-  },
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: 'black',
-  },
-
-  buttonText: {
-    fontSize: 16,
   },
 });
 

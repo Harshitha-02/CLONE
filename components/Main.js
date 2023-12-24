@@ -3,9 +3,9 @@ import { View, Text } from 'react-native'
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
 import{ connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import { fetchUser, fetchUserPosts, fetchUserFollowing } from '../redux/actions/index'
+import { fetchUser, fetchUserPosts, fetchUserFollowing, clearData } from '../redux/actions/index'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 
 import FeedScreen from './main/Feed'
 import SearchScreen from './main/Search'
@@ -19,11 +19,14 @@ const EmptyScreen = () => {
 
 class Main extends Component {
   componentDidMount() {
+    this.props.clearData();
     this.props.fetchUser();
     this.props.fetchUserPosts();
     this.props.fetchUserFollowing();
+
   }
   render() {
+    const { navigation } = this.props;
     return (
       
       <Tab.Navigator initialRouteName='Feed' labeled={false}>
@@ -52,6 +55,12 @@ class Main extends Component {
             )
           }} />
         <Tab.Screen name="Profile" component={ProfileScreen}
+          listeners={() => ({
+            tabPress: (event) => {
+              event.preventDefault();
+              navigation.navigate('Profile', { uid: getAuth().currentUser.uid });
+            },
+          })}
           options = {{
             tabBarIcon: ({color, size }) => (
               <MaterialCommunityIcons name="account-circle" color={color} size={26} />
@@ -67,6 +76,6 @@ const mapStateToProps = (store) => ({
 });
 
 const mapDispatchProps = (dispatch) => 
-  bindActionCreators({fetchUser, fetchUserPosts, fetchUserFollowing }, dispatch);
+  bindActionCreators({fetchUser, fetchUserPosts, fetchUserFollowing, clearData }, dispatch);
 
 export default connect(mapStateToProps, mapDispatchProps)(Main);
