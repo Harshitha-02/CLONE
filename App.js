@@ -19,6 +19,7 @@ import MainScreen from './components/Main';
 import AddScreen from './components/main/Add'
 import SaveScreen from './components/main/Save'
 import ProfileScreen from './components/main/Profile'
+import CommentScreen from './components/main/Comment'
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -104,12 +105,7 @@ class App extends Component {
             <Stack.Screen name="Main" component={MainScreen} option={{headerShown:false}} />
             <Stack.Screen name="Add" component={AddScreen}  navigation={this.props.navigation} />
             <Stack.Screen name="Save" component={SaveScreen}  navigation={this.props.navigation} />
-            <Stack.Screen name="Profile" component={ProfileScreen}  navigation={this.props.navigation} />
-            {/* <Stack.Screen name="Notification" component={NotificationScreen}  navigation={this.props.navigation} />
-            <Stack.Screen name="Add" component={AddScreen}  navigation={this.props.navigation} />
-            <Stack.Screen name="Save" component={SaveScreen}  navigation={this.props.navigation} />
-            <Stack.Screen name="Chat" component={ChatScreen}  navigation={this.props.navigation} />
-            <Stack.Screen name="Profile" component={ProfileScreen}  navigation={this.props.navigation} /> */}
+            <Stack.Screen name="Comment" component={CommentScreen}  navigation={this.props.navigation} />
           </Stack.Navigator>
         </NavigationContainer>
       </Provider>

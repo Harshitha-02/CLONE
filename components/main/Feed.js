@@ -54,6 +54,10 @@ function Feed(props) {
             <View style={styles.containerImage}>
               <Text style={styles.container}>{item.user.name}</Text>
               <Image style={styles.image} source={{ uri: item.downloadURL }} />
+              <Text
+                 onPress={() => props.navigation.navigate('Comment', { postId: item.id, uid: item.user.uid })}>
+                  View Comments...
+              </Text>
             </View>
           )}
         />
